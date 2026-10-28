@@ -1,0 +1,680 @@
+<title>2026 Stretch Goal</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: thermometer fills the left of a TV screen, the live scoreboard reads on the right. Single dark navy look, built for distance viewing. */
+:root {
+  --bg: #082D4A;
+  --panel: #0B3556;
+  --tube: #0E3A5E;
+  --glass: #3F8FBF;
+  --text: #FFFFFF;
+  --muted: #8CC8EC;
+  --mercury: #E04555;
+  --blue: #00649A;
+  --display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", Arial, sans-serif;
+  --body: "Barlow", Calibri, "Segoe UI", Arial, sans-serif;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+.fireworks { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.stage {
+  position: relative; z-index: 1;
+  height: 100%;
+  box-sizing: border-box;
+  padding-block: 4vh;
+  padding-inline: 3.5vw;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(16px, 3vw, 64px);
+  align-items: stretch;
+}
+.thermo { min-height: 0; min-width: 0; }
+.thermo svg { display: block; width: 100%; height: 100%; }
+.board {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: clamp(10px, 1.7vh, 24px);
+}
+.eyebrow {
+  margin: 0;
+  font: 600 clamp(14px, min(1.5vw, 2.6vh), 30px)/1.2 var(--display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.total {
+  font: 700 clamp(48px, min(8.6vw, 14vh), 190px)/0.95 var(--display);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.asof { margin: 0; font-size: clamp(16px, min(1.7vw, 3vh), 34px); color: var(--muted); }
+.pct { margin: 0; font: 600 clamp(18px, min(2vw, 3.6vh), 44px)/1.15 var(--display); letter-spacing: 0.03em; }
+.pct b { color: var(--mercury); font-weight: 700; }
+.steps { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 1.6vw, 32px); }
+.step {
+  min-width: 0;
+  background: var(--panel);
+  border-radius: 14px;
+  padding: clamp(14px, 2.2vh, 32px) clamp(14px, 1.6vw, 32px);
+  display: flex; flex-direction: column; gap: 0.5vh;
+}
+.step.hit { background: var(--text); color: var(--bg); }
+.step.hit .step-sub, .step.hit .step-name { color: var(--bg); }
+.step-name { margin: 0; font: 600 clamp(14px, min(1.45vw, 2.6vh), 28px)/1.2 var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.step-val { font: 700 clamp(30px, min(3.4vw, 6vh), 90px)/1 var(--display); font-variant-numeric: tabular-nums; }
+.step-val small { display: block; margin-top: 0.15em; font-size: 0.38em; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
+.step-sub { margin: 0; font-size: clamp(14px, min(1.45vw, 2.6vh), 28px); line-height: 1.3; color: var(--muted); }
+.daily { background: var(--blue); border-radius: 14px; padding: clamp(14px, 2vh, 28px) clamp(14px, 1.6vw, 32px); display: flex; flex-direction: column; gap: clamp(10px, 1.6vh, 22px); }
+.daily-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.daily .step-name { color: #fff; }
+.daily-val { font: 700 clamp(40px, min(5.4vw, 9.4vh), 130px)/1 var(--display); font-variant-numeric: tabular-nums; }
+.daily-val small { font-size: 0.4em; font-weight: 600; letter-spacing: 0.04em; }
+.daily-days { text-align: right; }
+.daily-days-n { font: 700 clamp(40px, min(5.4vw, 9.4vh), 130px)/1 var(--display); font-variant-numeric: tabular-nums; }
+.daily .step-sub { color: #fff; }
+.depts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(8px, 1vw, 20px); }
+.dept { background: var(--bg); border-radius: 10px; padding: clamp(8px, 1.2vh, 16px) clamp(8px, 0.9vw, 18px); min-width: 0; }
+.dept-name { margin: 0; font: 600 clamp(13px, min(1.2vw, 2.2vh), 24px)/1.2 var(--display); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.dept-amt { font: 700 clamp(20px, min(2.1vw, 3.9vh), 56px)/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.dept-pct { margin: 0; font-size: clamp(12px, min(1.2vw, 2.2vh), 22px); color: var(--muted); }
+.footer { margin: 0; font-size: clamp(12px, min(1.1vw, 2vh), 22px); color: var(--muted); }
+.status { margin: 0; font-size: 14px; color: var(--muted); }
+
+/* thermometer drawing */
+.tube-bg { fill: var(--tube); }
+.tube-line { fill: none; stroke: var(--glass); stroke-width: 5; }
+.mercury { fill: var(--mercury); }
+.gloss { fill: #fff; opacity: 0.16; }
+.tick line { stroke: var(--glass); stroke-width: 3; }
+.tick text { font: 600 34px var(--display); fill: var(--muted); }
+.co .lead { fill: none; stroke: var(--muted); stroke-width: 3; }
+.co .cross { stroke: #fff; stroke-width: 3; stroke-dasharray: 8 6; }
+.co .lbl { font: 600 26px var(--display); letter-spacing: 0.06em; fill: var(--muted); }
+.co .amt { font: 700 58px var(--display); fill: #fff; }
+.co .sub { font: 500 28px var(--body); fill: var(--muted); }
+.co .flag { opacity: 0; }
+.co .flag rect { fill: #fff; }
+.co .flag text { font: 700 30px var(--display); letter-spacing: 0.08em; fill: var(--bg); }
+.co.hit .flag { opacity: 1; }
+.co.hit .lead { stroke: #fff; }
+.tag rect, .tag polygon { fill: #fff; }
+.tag text { font: 700 40px var(--display); fill: var(--bg); }
+
+/* milestone celebration */
+.celebrate { position: fixed; inset: 0; z-index: 50; background: rgba(8, 45, 74, 0.94); display: flex; align-items: center; justify-content: center; text-align: center; cursor: pointer; }
+.celebrate[hidden] { display: none; }
+.celebrate canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.cel-text { position: relative; padding: 0 5vw; }
+.cel-kicker { margin: 0; font: 700 clamp(26px, 4vw, 96px)/1.1 var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.cel-amt { font: 700 clamp(64px, 17vw, 420px)/1 var(--display); font-variant-numeric: tabular-nums; }
+.cel-sub { margin: 0; font: 600 clamp(24px, 3.6vw, 88px)/1.2 var(--display); letter-spacing: 0.04em; }
+.preview { font: 600 14px var(--body); color: var(--muted); background: none; border: 1px solid var(--glass); border-radius: 8px; padding: 6px 10px; cursor: pointer; }
+
+/* update panel */
+.open-btn {
+  z-index: 5;
+  position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  font: 600 15px var(--body); color: var(--text); background: var(--blue);
+  border: 0; border-radius: 8px; padding: 10px 16px; cursor: pointer; opacity: 0.3;
+  transition: opacity .2s;
+}
+.open-btn:hover, .open-btn:focus-visible { opacity: 1; }
+.panel {
+  z-index: 6;
+  position: fixed; right: max(12px, env(safe-area-inset-right, 0px)); bottom: max(60px, calc(env(safe-area-inset-bottom, 0px) + 56px));
+  width: min(380px, calc(100vw - 32px));
+  background: var(--panel); border: 1px solid var(--glass); border-radius: 14px; padding: 20px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.45);
+}
+.panel h2 { margin: 0 0 14px; font: 700 26px var(--display); letter-spacing: 0.04em; }
+.panel label { display: block; font-size: 14px; color: var(--muted); margin: 12px 0 4px; }
+.panel input {
+  width: 100%; box-sizing: border-box; font: 600 24px var(--display); color: var(--text);
+  background: var(--bg); border: 1px solid var(--glass); border-radius: 8px; padding: 10px 12px;
+}
+.panel input:focus-visible, .open-btn:focus-visible, .panel button:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+.panel .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+.row { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+.save { font: 700 17px var(--body); color: var(--bg); background: #fff; border: 0; border-radius: 8px; padding: 10px 20px; cursor: pointer; }
+.cancel { font: 600 15px var(--body); color: var(--muted); background: none; border: 0; padding: 10px; cursor: pointer; }
+.msg { font-size: 14px; color: var(--muted); min-height: 1.2em; margin: 10px 0 0; }
+
+@media (max-width: 860px) {
+  .stage { padding-inline: 0; }
+  .depts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .daily-days { text-align: left; }
+  html, body { height: auto; }
+  .stage { height: auto; grid-template-columns: 1fr; }
+  .thermo { height: min(125vw, 760px); }
+}
+@media (prefers-reduced-motion: reduce) { .open-btn { transition: none; } }
+</style>
+
+<canvas class="fireworks" id="fireworks"></canvas>
+
+<main class="stage">
+  <section class="thermo" aria-label="Thermometer showing 2026 revenue against the $5 million milestone and the $5.2 million goal">
+    <svg viewBox="0 0 960 1060" preserveAspectRatio="xMidYMid meet" role="img" aria-label="2026 stretch goal thermometer">
+      <defs>
+        <clipPath id="glass"><path id="glass-path" d="M230 860 L230 100 A60 60 0 0 1 350 100 L350 860 A100 100 0 1 1 230 860 Z"/></clipPath>
+      </defs>
+      <path class="tube-bg" d="M230 860 L230 100 A60 60 0 0 1 350 100 L350 860 A100 100 0 1 1 230 860 Z"/>
+      <g clip-path="url(#glass)">
+        <rect id="fill" class="mercury" x="170" y="40" width="240" height="1020" transform="translate(0 820)"/>
+        <rect class="gloss" x="244" y="40" width="12" height="880"/>
+      </g>
+      <path class="tube-line" d="M230 860 L230 100 A60 60 0 0 1 350 100 L350 860 A100 100 0 1 1 230 860 Z"/>
+      <g id="ticks"></g>
+      <g id="callouts"></g>
+      <g id="tag" class="tag" transform="translate(0 860)" style="display:none">
+        <rect x="0" y="-34" width="216" height="68" rx="10"/>
+        <polygon points="216,-15 236,0 216,15"/>
+        <text id="tag-text" x="108" y="14" text-anchor="middle">$0</text>
+      </g>
+    </svg>
+  </section>
+
+  <section class="board">
+    <h1 class="eyebrow">Aire Serv of the Sioux Empire &middot; 2026 revenue</h1>
+    <div class="total" id="total">&mdash;</div>
+    <p class="asof" id="asof">Waiting for the first update</p>
+    <p class="pct" id="pct" hidden></p>
+    <div class="steps">
+      <div class="step" id="step1">
+        <p class="step-name">First milestone &middot; $5,000,000</p>
+        <div class="step-val" id="s1-val">&mdash;</div>
+      </div>
+      <div class="step" id="step2">
+        <p class="step-name">Big, hairy, audacious goal &middot; $5,200,000</p>
+        <div class="step-val" id="s2-val">&mdash;</div>
+      </div>
+    </div>
+    <div class="daily" id="daily">
+      <div class="daily-head">
+        <div>
+          <p class="step-name">Daily goal to reach $5,200,000</p>
+          <div class="daily-val" id="d-val">&mdash;</div>
+        </div>
+        <div class="daily-days">
+          <div class="daily-days-n" id="d-days">&mdash;</div>
+          <p class="step-sub">working days left</p>
+        </div>
+      </div>
+      <div class="depts" id="depts"></div>
+    </div>
+    <p class="status" id="status" hidden></p>
+  </section>
+</main>
+
+<div class="celebrate" id="celebrate" hidden>
+  <canvas id="confetti"></canvas>
+  <div class="cel-text">
+    <p class="cel-kicker" id="cel-kicker"></p>
+    <div class="cel-amt" id="cel-amt"></div>
+    <p class="cel-sub">Thank you, team.</p>
+  </div>
+</div>
+
+<button class="open-btn" id="open" type="button" hidden>Update numbers</button>
+<form class="panel" id="panel" hidden>
+  <h2>Update the thermometer</h2>
+  <label for="rev">Total 2026 revenue to date</label>
+  <input id="rev" inputmode="numeric" autocomplete="off" placeholder="$4,500,000">
+  <label for="min">Thermometer starts at</label>
+  <input id="min" inputmode="numeric" autocomplete="off" placeholder="$3,000,000">
+  <p class="hint">The bottom of the scale. Raise it to zoom in on the finish.</p>
+  <div class="row">
+    <button class="save" id="save" type="submit">Save and fill</button>
+    <button class="cancel" id="cancel" type="button">Close</button>
+  </div>
+  <div class="row">
+    <button class="preview" id="prev1" type="button">Preview $5M screen</button>
+    <button class="preview" id="prev2" type="button">Preview $5.2M screen</button>
+  </div>
+  <p class="msg" id="msg" role="status"></p>
+</form>
+
+<script type="application/json" id="baked">{"revenue":4061659,"prevRevenue":4000000,"scaleMin":3000000,"updatedAt":1793143912021}</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap">
+<script>
+(function () {
+  var MILESTONE = 5000000, GOAL = 5200000, DEFAULT_MIN = 3000000;
+  var Y_TOP = 100, Y_BOTTOM = 860, CAP_Y = 44, SVGNS = "http://www.w3.org/2000/svg";
+  var state = { revenue: null, prevRevenue: null, daysOverride: null, scaleMin: DEFAULT_MIN, updatedAt: null };
+  var shown = null, raf = 0, builtMin = null, db = null;
+  var $ = function (id) { return document.getElementById(id); };
+
+  function fmt(n) { return "$" + Math.round(n).toLocaleString("en-US"); }
+  function clamp(x, a, b) { return Math.min(b, Math.max(a, x)); }
+  function yFor(v) { return Y_BOTTOM - ((v - state.scaleMin) / (GOAL - state.scaleMin)) * (Y_BOTTOM - Y_TOP); }
+  function el(tag, attrs, text) {
+    var e = document.createElementNS(SVGNS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+
+  var callouts = {};
+  function buildScale() {
+    var min = state.scaleMin;
+    builtMin = min;
+    var ticks = $("ticks"), co = $("callouts");
+    ticks.textContent = ""; co.textContent = "";
+    var step = (MILESTONE - min) > 3000000 ? 1000000 : 500000;
+    for (var t = Math.ceil(min / step) * step; t < MILESTONE - 1; t += step) {
+      var y = yFor(t);
+      var g = el("g", { "class": "tick" });
+      g.appendChild(el("line", { x1: 350, x2: 372, y1: y, y2: y }));
+      g.appendChild(el("text", { x: 386, y: y + 12 }, "$" + (t / 1e6).toFixed(1) + "M"));
+      ticks.appendChild(g);
+    }
+    // goal callout
+    var gY = Y_TOP;
+    var g1 = el("g", { "class": "co" });
+    g1.appendChild(el("line", { "class": "cross", x1: 220, x2: 362, y1: gY, y2: gY }));
+    g1.appendChild(el("polyline", { "class": "lead", points: "350," + gY + " 396," + gY }));
+    g1.appendChild(el("text", { "class": "lbl", x: 412, y: gY - 40 }, "BIG, HAIRY, AUDACIOUS GOAL"));
+    g1.appendChild(el("text", { "class": "amt", x: 412, y: gY + 14 }, "$5,200,000"));
+    var f1 = el("g", { "class": "flag" });
+    f1.appendChild(el("rect", { x: 770, y: gY - 30, width: 170, height: 48, rx: 6 }));
+    f1.appendChild(el("text", { x: 855, y: gY + 4, "text-anchor": "middle" }, "REACHED"));
+    g1.appendChild(f1);
+    co.appendChild(g1);
+    // milestone callout
+    var mY = yFor(MILESTONE), tY = Math.max(mY, gY + 60);
+    var g2 = el("g", { "class": "co" });
+    g2.appendChild(el("line", { "class": "cross", x1: 220, x2: 362, y1: mY, y2: mY }));
+    g2.appendChild(el("polyline", { "class": "lead", points: "350," + mY + " 380," + mY + " 380," + tY + " 396," + tY }));
+    g2.appendChild(el("text", { "class": "lbl", x: 412, y: tY + 8 }, "FIRST MILESTONE"));
+    g2.appendChild(el("text", { "class": "amt", x: 412, y: tY + 66 }, "$5,000,000"));
+    var f2 = el("g", { "class": "flag" });
+    f2.appendChild(el("rect", { x: 770, y: tY + 32, width: 170, height: 48, rx: 6 }));
+    f2.appendChild(el("text", { x: 855, y: tY + 66, "text-anchor": "middle" }, "REACHED"));
+    g2.appendChild(f2);
+    co.appendChild(g2);
+    callouts = { goal: g1, first: g2 };
+  }
+
+  var DEPTS = [["Install", 0.68], ["Service", 0], ["Maintenance", 0.12], ["Duct cleaning", 0.04]];
+  DEPTS[1][1] = 1 - DEPTS[0][1] - DEPTS[2][1] - DEPTS[3][1];
+  (function () {
+    var box = document.getElementById("depts");
+    DEPTS.forEach(function (d, i) {
+      var c = document.createElement("div"); c.className = "dept";
+      var n = document.createElement("p"); n.className = "dept-name"; n.textContent = d[0];
+      var a = document.createElement("div"); a.className = "dept-amt"; a.id = "dept-" + i; a.textContent = "\u2014";
+      c.appendChild(n); c.appendChild(a); box.appendChild(c);
+    });
+  })();
+  // Working days: Monday to Friday, not counting Thanksgiving and Christmas. Today counts until 5 PM.
+  function workDaysLeft() {
+    if (state.daysOverride != null) return state.daysOverride;
+    var now = new Date(), d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    var end = new Date(2026, 11, 31), n = 0;
+    for (; d <= end; d.setDate(d.getDate() + 1)) {
+      var wd = d.getDay();
+      if (wd === 0 || wd === 6) continue;
+      var key = (d.getMonth() + 1) + "-" + d.getDate();
+      if (key === "11-26" || key === "12-25") continue;
+      var isToday = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+      if (isToday && now.getHours() >= 17) continue;
+      n++;
+    }
+    return n;
+  }
+  function renderDaily(v, days) {
+    $("d-days").textContent = days;
+    var dv = $("d-val"), perDay = null;
+    if (v == null || days <= 0) { dv.textContent = "\u2014"; }
+    else if (v >= GOAL) { dv.textContent = "Goal reached"; }
+    else { perDay = (GOAL - v) / days; dv.innerHTML = fmt(perDay) + "<small> a day</small>"; }
+    DEPTS.forEach(function (d, i) { $("dept-" + i).textContent = perDay == null ? "\u2014" : fmt(perDay * d[1]); });
+  }
+  function weeksLeft() {
+    var end = new Date(2026, 11, 31, 23, 59, 59);
+    return Math.max(0, (end - new Date()) / (7 * 864e5));
+  }
+  function perWeek(rem, weeks) {
+    if (weeks <= 0) return null;
+    return Math.round(rem / weeks / 100) * 100;
+  }
+
+  function render(v) {
+    if (builtMin !== state.scaleMin) buildScale();
+    var days = workDaysLeft();
+    if (v == null) {
+      $("fill").setAttribute("transform", "translate(0 " + (Y_BOTTOM - 40) + ")");
+      $("tag").style.display = "none";
+      $("total").textContent = "—";
+      $("pct").hidden = true;
+      $("s1-val").textContent = "—"; $("s2-val").textContent = "—";
+      $("step1").classList.remove("hit"); $("step2").classList.remove("hit");
+      callouts.first && callouts.first.classList.remove("hit");
+      callouts.goal && callouts.goal.classList.remove("hit");
+      renderDaily(null, days);
+      return;
+    }
+    var p = (v - state.scaleMin) / (GOAL - state.scaleMin);
+    var yFill = p <= 1
+      ? Y_BOTTOM - clamp(p, 0, 1) * (Y_BOTTOM - Y_TOP)
+      : Y_TOP - clamp((v - GOAL) / 100000, 0, 1) * (Y_TOP - CAP_Y);
+    $("fill").setAttribute("transform", "translate(0 " + (yFill - 40) + ")");
+    var tag = $("tag");
+    tag.style.display = "";
+    tag.setAttribute("transform", "translate(0 " + clamp(yFill, 90, Y_BOTTOM) + ")");
+    $("tag-text").textContent = fmt(v);
+    $("total").textContent = fmt(v);
+    var pc = $("pct");
+    pc.hidden = false;
+    pc.innerHTML = v >= GOAL ? "<b>" + Math.floor(v / GOAL * 100) + "%</b> of our $5,200,000 goal" : "<b>" + Math.floor(v / GOAL * 100) + "%</b> of the way to $5,200,000";
+    var hit1 = v >= MILESTONE, hit2 = v >= GOAL;
+    callouts.first.classList.toggle("hit", hit1);
+    callouts.goal.classList.toggle("hit", hit2);
+    $("step1").classList.toggle("hit", hit1);
+    $("step2").classList.toggle("hit", hit2);
+    fillStep("s1", MILESTONE, v, "$1,000 each", days);
+    renderDaily(v, days);
+    fillStep("s2", GOAL, v, "$2,000 total each", days);
+  }
+  function fillStep(id, target, v, reward, days) {
+    var rem = target - v;
+    if (rem <= 0) {
+      $(id + "-val").textContent = "Reached";
+      return;
+    }
+    $(id + "-val").innerHTML = fmt(rem) + '<small> to go</small>';
+  }
+
+  function setAsOf() {
+    if (!state.updatedAt) { $("asof").textContent = "Waiting for the first update"; return; }
+    var d = new Date(state.updatedAt);
+    $("asof").textContent = "Updated " + d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  }
+
+  var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function animateTo(target) {
+    cancelAnimationFrame(raf);
+    if (target == null) { shown = null; render(null); return; }
+    var from = shown;
+    if (from == null) {
+      try { var ls = localStorage.getItem("shownRev"); from = ls == null ? null : Number(ls); } catch (e) { from = null; }
+      if (from == null || !isFinite(from)) from = state.scaleMin;
+    }
+    try { localStorage.setItem("shownRev", String(target)); } catch (e) { /* optional */ }
+    if (reduce || from === target) { shown = target; render(shown); return; }
+    var t0 = performance.now(), dur = 2400;
+    (function frame(now) {
+      var k = clamp((now - t0) / dur, 0, 1), e = 1 - Math.pow(1 - k, 3);
+      shown = from + (target - from) * e;
+      render(shown);
+      if (k < 1) raf = requestAnimationFrame(frame); else { shown = target; render(shown); }
+    })(t0);
+  }
+
+  var baked = null;
+  try { baked = JSON.parse($("baked").textContent); } catch (e) { baked = null; }
+  if (baked && !isFinite(Number(baked.revenue))) baked = null;
+
+  function crossKind(d) {
+    if (!d || d.prevRevenue == null) return null;
+    var pv = Number(d.prevRevenue), r = Number(d.revenue);
+    if (!isFinite(pv) || !isFinite(r)) return null;
+    if (pv < GOAL && r >= GOAL) return "goal";
+    if (pv < MILESTONE && r >= MILESTONE) return "first";
+    return null;
+  }
+  function applyData(d, silent) {
+    if (d && isFinite(Number(d.revenue))) {
+      state.revenue = Number(d.revenue);
+      state.scaleMin = isFinite(Number(d.scaleMin)) && Number(d.scaleMin) >= 0 && Number(d.scaleMin) < MILESTONE ? Number(d.scaleMin) : DEFAULT_MIN;
+      state.updatedAt = d.updatedAt || null;
+      state.prevRevenue = d.prevRevenue == null ? null : Number(d.prevRevenue);
+      state.daysOverride = d.daysLeft != null && isFinite(Number(d.daysLeft)) ? Number(d.daysLeft) : null;
+    } else {
+      state.revenue = null; state.updatedAt = null; state.prevRevenue = null; state.daysOverride = null;
+    }
+    setAsOf();
+    animateTo(state.revenue);
+    var kind = state.revenue != null ? crossKind(d) : null;
+    // Fireworks run for as long as this update is the latest one, then stop when new numbers arrive.
+    setFireworks(kind, String(state.updatedAt) + ":" + kind);
+    if (!silent && kind) {
+      var tag = String(state.updatedAt) + ":" + kind, seen = null;
+      try { seen = localStorage.getItem("seenCross"); } catch (e) { seen = null; }
+      if (seen !== tag) {
+        try { localStorage.setItem("seenCross", tag); } catch (e) { /* optional */ }
+        setTimeout(function () { celebrate(kind); }, reduce ? 0 : 2700);
+      }
+    }
+  }
+  var dbCount = 0;
+  function applyDoc(snap) {
+    dbCount++;
+    var d = snap && snap.exists ? snap.data() : null;
+    var fresher = d && (!baked || Number(d.updatedAt || 0) >= Number(baked.updatedAt || 0));
+    applyData(fresher ? d : baked);
+  }
+
+  var fw = { kind: null, key: null, raf: 0, start: 0, timer: 0, parts: [], rockets: [], ctx: null };
+  var FW_COLORS = ["#E04555", "#FFFFFF", "#8CC8EC", "#4BA3D9"];
+  function fwSize() { var c = $("fireworks"); c.width = window.innerWidth; c.height = window.innerHeight; }
+  function stopFireworks() {
+    cancelAnimationFrame(fw.raf); clearTimeout(fw.start); clearInterval(fw.timer);
+    fw.kind = null; fw.key = null; fw.parts = []; fw.rockets = [];
+    var c = $("fireworks"); c.getContext("2d").clearRect(0, 0, c.width, c.height);
+  }
+  function launchRocket() {
+    if (!fw.kind || document.hidden) return;
+    var w = window.innerWidth, h = window.innerHeight;
+    fw.rockets.push({ x: w * (0.12 + Math.random() * 0.76), y: h + 10, ty: h * (0.1 + Math.random() * 0.32), vy: -(h / 62), c: FW_COLORS[Math.floor(Math.random() * FW_COLORS.length)] });
+  }
+  function explode(x, y, color) {
+    var n = fw.kind === "goal" ? 170 : 120, big = fw.kind === "goal" ? 1.25 : 1, i;
+    for (i = 0; i < n; i++) {
+      var ang = Math.random() * 6.2832, sp = (1 + Math.random() * 5.2) * big;
+      fw.parts.push({ x: x, y: y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 1, decay: 0.005 + Math.random() * 0.007, c: i % 5 === 0 ? "#FFFFFF" : color });
+    }
+  }
+  function fwFrame() {
+    var ctx = fw.ctx, c = ctx.canvas;
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.fillStyle = "rgba(0,0,0,0.13)"; ctx.fillRect(0, 0, c.width, c.height);
+    ctx.globalCompositeOperation = "lighter";
+    var i, q;
+    for (i = fw.rockets.length - 1; i >= 0; i--) {
+      q = fw.rockets[i]; q.y += q.vy; q.vy *= 0.985;
+      ctx.fillStyle = "#FFFFFF"; ctx.beginPath(); ctx.arc(q.x, q.y, 3.2, 0, 6.2832); ctx.fill();
+      if (q.y <= q.ty || q.vy > -3) { explode(q.x, q.y, q.c); fw.rockets.splice(i, 1); }
+    }
+    for (i = fw.parts.length - 1; i >= 0; i--) {
+      q = fw.parts[i]; q.x += q.vx; q.y += q.vy; q.vy += 0.045; q.vx *= 0.985; q.vy *= 0.985; q.life -= q.decay;
+      if (q.life <= 0) { fw.parts.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.max(0, q.life); ctx.fillStyle = q.c; ctx.beginPath(); ctx.arc(q.x, q.y, 3.6 * (0.5 + q.life / 2), 0, 6.2832); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    fw.raf = requestAnimationFrame(fwFrame);
+  }
+  function setFireworks(kind, key) {
+    if (!kind) { if (fw.kind) stopFireworks(); return; }
+    if (reduce || (fw.kind === kind && fw.key === key)) return;
+    stopFireworks();
+    fw.kind = kind; fw.key = key;
+    fwSize(); fw.ctx = $("fireworks").getContext("2d");
+    var volley = function () {
+      var n = kind === "goal" ? 5 : 3, i;
+      for (i = 0; i < n; i++) setTimeout(launchRocket, i * 450 + Math.random() * 300);
+    };
+    fw.start = setTimeout(function () { volley(); fw.timer = setInterval(volley, 10000); }, 2600);
+    fw.raf = requestAnimationFrame(fwFrame);
+  }
+  window.addEventListener("resize", function () { if (fw.kind) fwSize(); });
+
+  var confRaf = 0, celTimer = 0;
+  function stopCelebration() {
+    cancelAnimationFrame(confRaf); clearTimeout(celTimer);
+    var c = $("confetti"); c.getContext("2d").clearRect(0, 0, c.width, c.height);
+    $("celebrate").hidden = true;
+  }
+  function celebrate(kind) {
+    $("cel-kicker").textContent = kind === "goal" ? "Big, hairy, audacious goal reached" : "First milestone reached";
+    $("cel-amt").textContent = kind === "goal" ? "$5,200,000" : "$5,000,000";
+    $("celebrate").hidden = false;
+    var c = $("confetti"), ctx = c.getContext("2d");
+    c.width = window.innerWidth; c.height = window.innerHeight;
+    clearTimeout(celTimer);
+    celTimer = setTimeout(stopCelebration, 14000);
+    if (reduce) return;
+    var colors = ["#E04555", "#FFFFFF", "#00649A", "#8CC8EC"], parts = [], i;
+    for (i = 0; i < 260; i++) {
+      parts.push({ x: Math.random() * c.width, y: -Math.random() * c.height, w: 10 + Math.random() * 12, h: 6 + Math.random() * 9,
+        vy: 2 + Math.random() * 4, vx: -1.5 + Math.random() * 3, r: Math.random() * 6.28, vr: -0.12 + Math.random() * 0.24,
+        c: colors[i % colors.length] });
+    }
+    cancelAnimationFrame(confRaf);
+    (function tick() {
+      ctx.clearRect(0, 0, c.width, c.height);
+      parts.forEach(function (q) {
+        q.x += q.vx; q.y += q.vy; q.r += q.vr;
+        if (q.y > c.height + 20) { q.y = -20; q.x = Math.random() * c.width; }
+        ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(q.r); ctx.fillStyle = q.c; ctx.fillRect(-q.w / 2, -q.h / 2, q.w, q.h); ctx.restore();
+      });
+      confRaf = requestAnimationFrame(tick);
+    })();
+  }
+  $("celebrate").addEventListener("click", stopCelebration);
+  $("prev1").addEventListener("click", function () { $("panel").hidden = true; celebrate("first"); });
+  $("prev2").addEventListener("click", function () { $("panel").hidden = true; celebrate("goal"); });
+
+  function parseMoney(s) {
+    s = String(s || "").trim();
+    var mult = /m\s*$/i.test(s) ? 1e6 : 1;
+    var n = Number(s.replace(/[^0-9.]/g, ""));
+    return isFinite(n) && s !== "" ? n * mult : NaN;
+  }
+
+  function showStatus(t) { var s = $("status"); s.textContent = t; s.hidden = !t; }
+
+  async function init() {
+    var claude = window.claude;
+    if (!claude || !claude.use) { if (baked) applyData(baked, false); else showStatus("Live updates are not available in this view."); return; }
+    db = await claude.use("db");
+    var user = await claude.use("user");
+    if (!db) { if (baked) applyData(baked, false); else showStatus("Sign in to claude.ai on this screen to see the live numbers."); return; }
+    db.doc("tracker/current").onSnapshot(applyDoc, function () {
+      showStatus("Lost the connection to the numbers. Reload this page.");
+    });
+    var canEdit = user ? await user.canEdit() : false;
+    if (canEdit) {
+      $("open").hidden = false;
+    }
+  }
+
+  $("open").addEventListener("click", function () {
+    var p = $("panel");
+    p.hidden = !p.hidden;
+    if (!p.hidden) {
+      $("rev").value = state.revenue != null ? fmt(state.revenue) : "";
+      $("min").value = fmt(state.scaleMin);
+      $("msg").textContent = "";
+      $("rev").focus();
+    }
+  });
+  $("cancel").addEventListener("click", function () { $("panel").hidden = true; });
+  $("panel").addEventListener("submit", async function (e) {
+    e.preventDefault();
+    var rev = parseMoney($("rev").value), mn = parseMoney($("min").value);
+    var msg = $("msg");
+    if (!isFinite(rev) || rev < 0) { msg.textContent = "Enter the revenue as a number, like 4,500,000."; return; }
+    if (!isFinite(mn) || mn < 0 || mn >= MILESTONE) { msg.textContent = "The scale should start below $5,000,000."; return; }
+    if (!db) { msg.textContent = "Not connected. Reload and try again."; return; }
+    var btn = $("save"); btn.disabled = true; msg.textContent = "Saving...";
+    var now = Date.now();
+    try {
+      await db.doc("tracker/current").set({ revenue: rev, prevRevenue: state.revenue, scaleMin: mn, updatedAt: now });
+    } catch (err) {
+      msg.textContent = err && err.code === "invalid_argument" ? "You need editor access to change the numbers." : "Could not save. Try again.";
+      btn.disabled = false; return;
+    }
+    try { await db.collection("history").add({ revenue: rev, at: now }); } catch (err) { /* history is optional */ }
+    btn.disabled = false;
+    msg.textContent = "Saved.";
+    setTimeout(function () { $("panel").hidden = true; }, 700);
+  });
+
+  var loadedAt = new Date().toLocaleTimeString("en-US");
+  function pollNote(t) { var n = $("pollnote"); if (n) n.textContent = t; }
+  // Poll the published numbers file so screens that are not signed in still pick up new numbers.
+  function pollData() {
+    if (!window.fetch) return;
+    fetch("data.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) {
+      if (!r.ok) throw new Error("HTTP " + r.status);
+      return r.json();
+    }).then(function (d) {
+      if (!d || !isFinite(Number(d.revenue))) throw new Error("bad data");
+      pollNote("Checked " + new Date().toLocaleTimeString("en-US") + " | file says $" + Math.round(Number(d.revenue)).toLocaleString("en-US") + " | live link " + (db ? "on, " + dbCount + " received" : "off") + " | loaded " + loadedAt);
+      if (Number(d.updatedAt || 0) > Number(state.updatedAt || 0)) { baked = d; applyData(d, false); }
+    }).catch(function (e) { pollNote("Update check failed: " + (e && e.message ? e.message : "unknown")); });
+  }
+  setInterval(pollData, 20000);
+
+  /* Keep-awake: ask for a screen wake lock and loop a tiny silent video so the TV does not start its screensaver */
+  (function () {
+    var lock = null, vid = null;
+    function wl() {
+      try {
+        if (navigator.wakeLock && navigator.wakeLock.request) {
+          navigator.wakeLock.request("screen").then(function (l) { lock = l; l.addEventListener("release", function () { lock = null; }); }).catch(function () {});
+        }
+      } catch (e) {}
+    }
+    function vidPlay() {
+      try {
+        if (!vid) {
+          vid = document.createElement("video");
+          vid.setAttribute("muted", ""); vid.muted = true; vid.setAttribute("playsinline", ""); vid.setAttribute("loop", ""); vid.loop = true;
+          vid.style.cssText = "position:fixed;right:8px;bottom:8px;width:160px;height:90px;opacity:0.04;pointer-events:none;z-index:0";
+          var s1 = document.createElement("source"); s1.src = "data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAOybW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAB9AAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAtx0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAB9AAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAEAAAABAAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAfQAAAQAAABAAAAAAJUbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAAoAAAAUABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAAB/21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAb9zdGJsAAAAv3N0c2QAAAAAAAAAAQAAAK9hdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAEAAQABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAANWF2Y0MBZAAK/+EAGGdkAAqs2UQmwEQAAAMABAAAAwAoPEiWWAEABmjr48siwP34+AAAAAAQcGFzcAAAAAEAAAABAAAAFGJ0cnQAAAAAAAANXAAADVwAAAAYc3R0cwAAAAAAAAABAAAACgAACAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAAGBjdHRzAAAAAAAAAAoAAAABAAAQAAAAAAEAACgAAAAAAQAAEAAAAAABAAAAAAAAAAEAAAgAAAAAAQAAKAAAAAABAAAQAAAAAAEAAAAAAAAAAQAACAAAAAABAAAQAAAAABxzdHNjAAAAAAAAAAEAAAABAAAACgAAAAEAAAA8c3RzegAAAAAAAAAAAAAACgAAAtcAAAAOAAAADAAAAAwAAAAMAAAAFAAAAA4AAAAMAAAADAAAABQAAAAUc3RjbwAAAAAAAAABAAAD4gAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNjAuMTYuMTAwAAAACGZyZWUAAANfbWRhdAAAAq0GBf//qdxF6b3m2Ui3lizYINkj7u94MjY0IC0gY29yZSAxNjQgcjMxMDggMzFlMTlmOSAtIEguMjY0L01QRUctNCBBVkMgY29kZWMgLSBDb3B5bGVmdCAyMDAzLTIwMjMgLSBodHRwOi8vd3d3LnZpZGVvbGFuLm9yZy94MjY0Lmh0bWwgLSBvcHRpb25zOiBjYWJhYz0xIHJlZj0zIGRlYmxvY2s9MTowOjAgYW5hbHlzZT0weDM6MHgxMTMgbWU9aGV4IHN1Ym1lPTcgcHN5PTEgcHN5X3JkPTEuMDA6MC4wMCBtaXhlZF9yZWY9MSBtZV9yYW5nZT0xNiBjaHJvbWFfbWU9MSB0cmVsbGlzPTEgOHg4ZGN0PTEgY3FtPTAgZGVhZHpvbmU9MjEsMTEgZmFzdF9wc2tpcD0xIGNocm9tYV9xcF9vZmZzZXQ9LTIgdGhyZWFkcz0yIGxvb2thaGVhZF90aHJlYWRzPTEgc2xpY2VkX3RocmVhZHM9MCBucj0wIGRlY2ltYXRlPTEgaW50ZXJsYWNlZD0wIGJsdXJheV9jb21wYXQ9MCBjb25zdHJhaW5lZF9pbnRyYT0wIGJmcmFtZXM9MyBiX3B5cmFtaWQ9MiBiX2FkYXB0PTEgYl9iaWFzPTAgZGlyZWN0PTEgd2VpZ2h0Yj0xIG9wZW5fZ29wPTAgd2VpZ2h0cD0yIGtleWludD0yNTAga2V5aW50X21pbj01IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAAImWIhAAT//73sY+BTctIRZc6inofw12BbqTaFEmIH5O+kYEAAAAKQZokbEEv/rUr7wAAAAhBnkJ4gh8CxwAAAAgBnmF0Q/8ExAAAAAgBnmNqQ/8ExQAAABBBmmhJqEFomUwIIf/+qlffAAAACkGehkURLBD/AscAAAAIAZ6ldEP/BMUAAAAIAZ6nakP/BMQAAAAQQZqpSahBbJlMCH///qmdNA=="; s1.type = "video/mp4";
+          var s2 = document.createElement("source"); s2.src = "data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAALCEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHYTbuMU6uEElTDZ1OsggEeTbuMU6uEHFO7a1OsggKs7AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsirXsYMPQkBNgI1MYXZmNjAuMTYuMTAwV0GNTGF2ZjYwLjE2LjEwMESJiECfQAAAAAAAFlSua8GuAQAAAAAAADjXgQFzxYgYCdJWYeGH7JyBACK1nIN1bmSIgQCGhVZfVlA4g4EBI+ODhAvrwgDgibCBQLqBQJqBAhJUw2f8c3OgY8CAZ8iaRaOHRU5DT0RFUkSHjUxhdmY2MC4xNi4xMDBzc9ZjwItjxYgYCdJWYeGH7GfIoUWjh0VOQ09ERVJEh5RMYXZjNjAuMzEuMTAyIGxpYnZweGfIoUWjiERVUkFUSU9ORIeTMDA6MDA6MDIuMDAwMDAwMDAwAB9DtnVBB+eBAKOqgQAAgPACAJ0BKkAAQAAARwiFhYiFhIgCAgAGcDxCYAqyIPcwAP7/q1CAo5aBAMgA0QEABRCsABgAGFgv9AAIjoAAo5aBAZAA0QEABRCsABgAGFgv9AAIjoAAo5aBAlgA0QEABRCsABgAGFgv9AAIjoAAo5aBAyAA0QEABRCsABgAGFgv9AAIjoAAo5aBA+gA0QEABRCsABgAGFgv9AAIjoAAo5aBBLAA0QEABRCsABgAGFgv9AAIjoAAo5aBBXgA0QEABRAQFGAAYWC/0AAiOgAAo5aBBkAA0QEABRCsABgAGFgv9AAIjoAAo5aBBwgA0QEABRCsABgAGFgv9AAIjoAAHFO7a5G7j7OBALeK94EB8YIBn/CBAw=="; s2.type = "video/webm";
+          vid.appendChild(s1); vid.appendChild(s2); document.body.appendChild(vid);
+        }
+        var p = vid.play(); if (p && p.catch) p.catch(function () {});
+      } catch (e) {}
+    }
+    function kick() { if (!lock) wl(); if (!vid || vid.paused) vidPlay(); }
+    kick();
+    ["keydown", "click", "pointerdown", "touchstart"].forEach(function (ev) { document.addEventListener(ev, kick, true); });
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) kick(); });
+    setInterval(kick, 30000);
+  })();
+
+  // Screens without the live link reload every minute to pick up the newest published version.
+
+  setTimeout(pollData, 1500);
+
+  // first paint: empty thermometer, then live data
+  render(null);
+  if (baked) applyData(baked, true);
+  setInterval(function () { render(shown); }, 60000);
+  try {
+    if (navigator.wakeLock) {
+      var lock = function () { navigator.wakeLock.request("screen").catch(function () {}); };
+      lock();
+      document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") lock(); });
+    }
+  } catch (e) { /* optional */ }
+  init();
+})();
+</script>
