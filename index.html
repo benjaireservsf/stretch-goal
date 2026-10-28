@@ -319,7 +319,7 @@ body {
       c.appendChild(n); c.appendChild(a); box.appendChild(c);
     });
   })();
-  // Working days: Monday to Friday, not counting Thanksgiving and Christmas. Today counts until 5 PM.
+  // Working days: Monday to Friday, not counting Thanksgiving and Christmas. Today counts all day; the count drops at midnight.
   function workDaysLeft() {
     if (state.daysOverride != null) return state.daysOverride;
     var now = new Date(), d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -330,7 +330,6 @@ body {
       var key = (d.getMonth() + 1) + "-" + d.getDate();
       if (key === "11-26" || key === "12-25") continue;
       var isToday = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
-      if (isToday && now.getHours() >= 17) continue;
       n++;
     }
     return n;
