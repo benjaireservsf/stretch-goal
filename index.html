@@ -628,6 +628,8 @@ body {
     }).catch(function (e) { pollNote("Update check failed: " + (e && e.message ? e.message : "unknown")); });
   }
   setInterval(pollData, 20000);
+  /* Reload every 30 minutes so the TV always runs the newest version of the page code */
+  setInterval(function () { try { location.reload(); } catch (e) {} }, 30 * 60 * 1000);
 
   /* Keep-awake: ask for a screen wake lock and loop a tiny silent video so the TV does not start its screensaver */
   (function () {
