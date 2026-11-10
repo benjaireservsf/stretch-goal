@@ -204,7 +204,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   </div>
 </div>
 
-<script type="application/json" id="baked">{"year":2027,"asOf":null,"updatedAt":null,"targets":{"install":3500000,"service":1180000,"maintenance":570000,"duct":250000},"ytd":{"install":0,"service":0,"maintenance":0,"duct":0},"history":[],"holidays":["2027-11-25","2027-12-25"],"weights":null}</script>
+<script type="application/json" id="baked">{"year":2027,"asOf":null,"updatedAt":null,"targets":{"install":3630000,"service":797500,"maintenance":852500,"duct":220000},"ytd":{"install":0,"service":0,"maintenance":0,"duct":0},"history":[],"holidays":["2027-11-25","2027-12-25"],"weights":null}</script>
 <script>
 (function () {
   "use strict";
@@ -237,7 +237,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   function usd(n) { return "$" + fmt(n); }
   function compact(n) {
     if (n >= 1e6) return "$" + (n / 1e6).toFixed(2).replace(/0$/, "").replace(/\.0$/, "") + "M";
-    if (n >= 1e3) return "$" + Math.round(n / 1e3) + "K";
+    if (n >= 1e3) return "$" + (n / 1e3).toFixed(1).replace(/\.0$/, "") + "K";
     return "$" + Math.round(n);
   }
   var MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
