@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Update the 2027 goal boards.
-Usage: python3 update.py 2027-01-29 install=125000 service=40000 maintenance=22000 duct=9000
+Usage: python3 update.py 2027-01-29 install=125000 service=40000 maintenance=22000 plans=6000 duct=9000
   - first argument is the date the totals are as of (end of that working day)
-  - the four numbers are year-to-date revenue for each department
+  - the numbers are year-to-date revenue for each department (install, service, maintenance, plans, duct)
 Writes data.json and refreshes the baked copy inside index.html, appends to history (replacing any entry for the same date)."""
 import json, re, sys, time, os
 here = os.path.dirname(os.path.abspath(__file__))
@@ -10,7 +10,7 @@ if len(sys.argv) < 3:
     sys.exit(__doc__)
 as_of = sys.argv[1]
 vals = dict(a.split("=") for a in sys.argv[2:])
-keys = ["install", "service", "maintenance", "duct"]
+keys = ["install", "service", "maintenance", "plans", "duct"]
 d = json.load(open(os.path.join(here, "data.json")))
 cur = {k: float(vals[k].replace(",", "").replace("$", "")) if k in vals else d["ytd"][k] for k in keys}
 cur = {k: int(round(v)) for k, v in cur.items()}
