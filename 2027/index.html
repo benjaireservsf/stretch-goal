@@ -204,14 +204,14 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   </div>
 </div>
 
-<script type="application/json" id="baked">{"year":2027,"asOf":null,"updatedAt":null,"targets":{"install":3575000,"service":785000,"maintenance":615000,"plans":275000,"duct":250000},"ytd":{"install":0,"service":0,"maintenance":0,"plans":0,"duct":0},"history":[],"holidays":["2027-11-25","2027-12-25"],"weights":null}</script>
+<script type="application/json" id="baked">{"year":2027,"asOf":null,"updatedAt":null,"targets":{"install":3575000,"service":785000,"maintenance":615000,"plans":275000,"duct":250000,"plansSold":500},"ytd":{"install":0,"service":0,"maintenance":0,"plans":0,"duct":0,"plansSold":0},"history":[],"holidays":["2027-11-25","2027-12-25"],"weights":null}</script>
 <script>
 (function () {
   "use strict";
   var Q = new URLSearchParams(location.search);
   var HOLD = (Number(Q.get("sec")) > 0 ? Number(Q.get("sec")) : 60) * 1000;
   var MOVE = 1500, REWIND = 2300, YEAR = 2027;
-  var KEYS = ["install", "service", "maintenance", "plans", "duct"];
+  var KEYS = ["install", "service", "maintenance", "plans", "duct"], MET = KEYS.concat(["plansSold"]);
   var $ = function (id) { return document.getElementById(id); };
 
   /* ---------------- boards ---------------- */
@@ -229,10 +229,11 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
     { key: "install", nav: "Install", name: "Install", a: "#39b8ff", a2: "#a2e0ff", icon: "install" },
     { key: "service", nav: "Service", name: "Service", a: "#ff8c4a", a2: "#ffc7a0", icon: "service" },
     { key: "maintenance", nav: "Maintenance", name: "Maintenance", a: "#35d9b1", a2: "#a0f2dd", icon: "maintenance" },
-    { key: "plans", nav: "Maint plans", short: "Plans", name: "Maintenance plans", a: "#b794ff", a2: "#dccaff", icon: "plans" },
+    { key: "plans", nav: "Maint plans", short: "Plans", name: "Maintenance plans", m: "plansSold", unit: true, a: "#b794ff", a2: "#dccaff", icon: "plans" },
     { key: "duct", nav: "Duct cleaning", short: "Duct", name: "Duct cleaning", a: "#ffc84a", a2: "#ffe59c", icon: "duct" }
   ];
-  function board(k) { for (var i = 0; i < BOARDS.length; i++) if (BOARDS[i].key === k) return BOARDS[i]; }
+  function board(k) { for (var i = 0; i < BOARDS.length; i++) if (BOARDS[i].key === k || BOARDS[i].m === k) return BOARDS[i]; }
+  function mk(b) { return b.m || b.key; }
 
   /* ---------------- formatting ---------------- */
   function fmt(n) { return Math.round(n).toLocaleString("en-US"); }
@@ -295,23 +296,23 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
     d = d || {};
     var o = { targets: {}, ytd: {}, history: [], holidays: d.holidays || [], weights: d.weights || null, asOf: d.asOf || null, updatedAt: d.updatedAt || null };
     var t = d.targets || {}, y = d.ytd || {};
-    KEYS.forEach(function (k) { o.targets[k] = num(t[k]); o.ytd[k] = num(y[k]); });
+    MET.forEach(function (k) { o.targets[k] = num(t[k]); o.ytd[k] = num(y[k]); });
     (d.history || []).forEach(function (h) {
       if (!h || !h.asOf) return;
-      var e = { asOf: h.asOf }; KEYS.forEach(function (k) { e[k] = num(h[k]); }); o.history.push(e);
+      var e = { asOf: h.asOf }; MET.forEach(function (k) { e[k] = num(h[k]); }); o.history.push(e);
     });
     o.history.sort(function (a, b) { return a.asOf < b.asOf ? -1 : 1; });
     return o;
   }
   function demoData(base, f) {
     var d = normalize(base);
-    var ratio = { install: 1.035, service: 0.95, maintenance: 1.075, plans: 1.02, duct: 0.9 }, phase = { install: 0.4, service: 2.1, maintenance: 4.0, plans: 3.1, duct: 5.3 };
+    var ratio = { install: 1.035, service: 0.95, maintenance: 1.075, plans: 1.02, plansSold: 1.02, duct: 0.9 }, phase = { install: 0.4, service: 2.1, maintenance: 4.0, plans: 3.1, plansSold: 3.1, duct: 5.3 };
     D = d; buildCalendar();
     var end = new Date(YEAR, 0, 1 + Math.round(clamp(f, 0.01, 1) * 364));
     while (end.getDay() === 0 || end.getDay() === 6) end.setDate(end.getDate() - 1);
     function snap(date) {
       var e = { asOf: date.getFullYear() + "-" + ("0" + (date.getMonth() + 1)).slice(-2) + "-" + ("0" + date.getDate()).slice(-2) };
-      KEYS.forEach(function (k) { e[k] = Math.round(d.targets[k] * planFrac(k, date) * (ratio[k] + 0.06 * Math.sin(doy(date) / 37 + phase[k]))); });
+      MET.forEach(function (k) { e[k] = Math.round(d.targets[k] * planFrac(k, date) * (ratio[k] + 0.06 * Math.sin(doy(date) / 37 + phase[k]))); });
       return e;
     }
     var hist = [], c = new Date(YEAR, 0, 1);
@@ -319,7 +320,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
     while (c < end) { hist.push(snap(c)); c = new Date(c.getFullYear(), c.getMonth(), c.getDate() + 7); }
     var last = snap(end); hist.push(last);
     d.history = hist; d.asOf = last.asOf; d.updatedAt = Date.now();
-    KEYS.forEach(function (k) { d.ytd[k] = last[k]; });
+    MET.forEach(function (k) { d.ytd[k] = last[k]; });
     return d;
   }
   function ytdOf(k) {
@@ -392,7 +393,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   }
   function chartHTML(b, c) {
     var W = 602, H = 322, m = { l: 62, r: 10, t: 14, b: 34 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
-    var ser = seriesOf(b.key), maxA = 0;
+    var M = mk(b), U = !!b.unit, CF = U ? function (n) { return fmt(n); } : compact, ser = seriesOf(M), maxA = 0;
     ser.forEach(function (p) { if (p.v > maxA) maxA = p.v; });
     var raw = Math.max(c.target, maxA) * 1.06, step = niceStep(raw / 4), nt = Math.ceil(raw / step - 1e-9), ymax = step * nt;
     var X = function (x) { return m.l + iw * x / 365; }, Y = function (v) { return m.t + ih * (1 - v / ymax); };
@@ -405,7 +406,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
     for (i = 0; i <= nt; i++) {
       var gy = Y(step * i);
       h += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + gy.toFixed(1) + '" y2="' + gy.toFixed(1) + '" stroke="rgba(255,255,255,' + (i ? ".08" : ".2") + ')"/>';
-      h += '<text x="' + (m.l - 10) + '" y="' + (gy + 6).toFixed(1) + '" text-anchor="end" font-size="18" font-weight="600" letter-spacing="1" fill="#6b8fac">' + (i ? compact(step * i) : "$0") + "</text>";
+      h += '<text x="' + (m.l - 10) + '" y="' + (gy + 6).toFixed(1) + '" text-anchor="end" font-size="18" font-weight="600" letter-spacing="1" fill="#6b8fac">' + (i ? CF(step * i) : "0") + "</text>";
     }
     for (i = 0; i < 12; i++) {
       var mid = (FIRST[i] + (i < 11 ? FIRST[i + 1] : 365)) / 2;
@@ -414,9 +415,9 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
     for (i = 3; i < 12; i += 3) h += '<line x1="' + X(FIRST[i]).toFixed(1) + '" x2="' + X(FIRST[i]).toFixed(1) + '" y1="' + m.t + '" y2="' + (m.t + ih) + '" stroke="rgba(255,255,255,.13)" stroke-dasharray="3 5"/>';
     // goal line
     h += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + Y(c.target).toFixed(1) + '" y2="' + Y(c.target).toFixed(1) + '" stroke="' + b.a + '" stroke-width="1.6" stroke-dasharray="2 6" stroke-linecap="round" opacity=".85"/>';
-    h += '<text x="' + (m.l + 8) + '" y="' + (Y(c.target) - 8).toFixed(1) + '" font-size="18" font-weight="700" letter-spacing="2" fill="' + b.a2 + '">GOAL ' + compact(c.target) + "</text>";
+    h += '<text x="' + (m.l + 8) + '" y="' + (Y(c.target) - 8).toFixed(1) + '" font-size="18" font-weight="700" letter-spacing="2" fill="' + b.a2 + '">GOAL ' + CF(c.target) + "</text>";
     // plan
-    var pp = "M" + X(0).toFixed(1) + "," + Y(0).toFixed(1), pk = b.key;
+    var pp = "M" + X(0).toFixed(1) + "," + Y(0).toFixed(1), pk = M;
     WD.forEach(function (d) { pp += " L" + X(d + 1).toFixed(1) + "," + Y(planAt(pk, new Date(YEAR, 0, 1 + d))).toFixed(1); });
     h += '<path d="' + pp + '" fill="none" stroke="#fff" stroke-width="2.4" stroke-dasharray="7 7" opacity=".75"/>';
     // actual
@@ -458,51 +459,62 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
     return h;
   }
 
+  function pacePanel(b, c) {
+    var wks = 0, soFar = c.asOf ? (WDTHRU[clamp(doy(c.asOf), 0, 364)] / 5) : 0, rev = ytdOf("plans"), rt = D.targets.plans;
+    var per = soFar > 0 ? c.ytd / soFar : 0, need = c.daily * 5, plan = c.planDaily * 5;
+    var h = '<h3>Selling pace</h3><div class="big"><span>' + (c.started ? per.toFixed(1) : "—") + '</span><small>/wk</small></div>';
+    h += '<div class="cap">plans sold per week so far</div>';
+    h += '<div class="kv"><span>Needed per week</span><b>' + (c.ytd >= c.target ? "Done" : need.toFixed(1)) + '</b></div>';
+    h += '<div class="kv"><span>Plan pace per week</span><b>' + plan.toFixed(1) + '</b></div>';
+    return h;
+  }
+
   /* ---------------- quarters ---------------- */
   var QEND = [new Date(YEAR, 2, 31), new Date(YEAR, 5, 30), new Date(YEAR, 8, 30), new Date(YEAR, 11, 31)];
   function quarterHTML(b, c) {
     var h = "";
     QEND.forEach(function (e, i) {
-      var amt = planAt(b.key, e), st = "up", label = "Later", prog = 0;
+      var U = !!b.unit, amt = planAt(mk(b), e); if (U) amt = Math.round(amt); var st = "up", label = "Later", prog = 0;
       var qs = i ? QEND[i - 1] : null;
       if (c.ytd >= amt - 0.5 && c.started) { st = "hit"; label = "Hit"; prog = 1; }
-      else if (c.asOf && c.asOf >= e) { st = "short"; label = "Short " + compact(amt - c.ytd); prog = amt ? c.ytd / amt : 0; }
+      else if (c.asOf && c.asOf >= e) { st = "short"; label = "Short " + (U ? fmt(amt - c.ytd) : compact(amt - c.ytd)); prog = amt ? c.ytd / amt : 0; }
       else if (c.asOf && (!qs || c.asOf > qs)) { st = "now"; label = "Now"; prog = amt ? c.ytd / amt : 0; }
       else if (!c.asOf && i === 0) { st = "now"; label = "Next"; }
-      h += '<div class="q glass ' + st + '"><div class="qn">Q' + (i + 1) + "<span>" + MON[e.getMonth()] + " " + e.getDate() + '</span></div><div class="qs">' + label + '</div><div class="qa">' + usd(amt) + '</div><div class="qp"><i data-qp="' + clamp(prog, 0, 1).toFixed(4) + '"></i></div></div>';
+      h += '<div class="q glass ' + st + '"><div class="qn">Q' + (i + 1) + "<span>" + MON[e.getMonth()] + " " + e.getDate() + '</span></div><div class="qs">' + label + '</div><div class="qa">' + (U ? fmt(amt) : usd(amt)) + '</div><div class="qp"><i data-qp="' + clamp(prog, 0, 1).toFixed(4) + '"></i></div></div>';
     });
     return h;
   }
 
   /* ---------------- slide ---------------- */
   function slideHTML(b, idx) {
-    var c = calc(b.key), h = "";
+    var U = !!b.unit, c = calc(mk(b)), h = "";
+    var F = U ? fmt : usd, C = U ? fmt : compact, u1 = U ? "plans" : "";
     var chip;
     if (!c.started) chip = '<div class="chip even"><i>&#9679;</i>Kickoff<em>tracking begins with the first 2027 update</em></div>';
-    else if (c.ytd >= c.target) chip = '<div class="chip up"><i>&#9733;</i>Goal reached<em>' + usd(c.over) + " over</em></div>";
-    else if (Math.abs(c.delta) < Math.max(500, c.plan * 0.004)) chip = '<div class="chip even"><i>=</i>Right on plan</div>';
-    else if (c.delta > 0) chip = '<div class="chip up"><i>&#9650;</i>' + usd(c.delta) + ' ahead<em>of plan to date</em></div>';
-    else chip = '<div class="chip down"><i>&#9660;</i>' + usd(-c.delta) + ' behind<em>plan to date</em></div>';
-    var rem = c.ytd >= c.target ? '<div class="v">Done</div><div class="n good">Goal reached</div>' : '<div class="v">' + usd(c.rem) + '</div><div class="n">left to reach ' + compact(c.target) + "</div>";
-    var dailyN = "";
-    if (c.ytd < c.target && c.started) dailyN = c.daily > c.planDaily * 1.005 ? '<div class="n warm">above the ' + usd(c.planDaily) + " plan average</div>" : '<div class="n good">at or under the ' + usd(c.planDaily) + " plan average</div>";
-    else dailyN = '<div class="n">plan average ' + usd(c.planDaily) + " a day</div>";
-    var dailyV = c.ytd >= c.target ? '<div class="v">Done</div>' : '<div class="v">' + usd(c.daily) + "<small>a day</small></div>";
+    else if (c.ytd >= c.target) chip = '<div class="chip up"><i>&#9733;</i>Goal reached<em>' + F(c.over) + (U ? " plans" : "") + " over</em></div>";
+    else if (Math.abs(c.delta) < Math.max(U ? 1 : 500, c.plan * 0.004)) chip = '<div class="chip even"><i>=</i>Right on plan</div>';
+    else if (c.delta > 0) chip = '<div class="chip up"><i>&#9650;</i>' + F(c.delta) + (U ? ' plans' : '') + ' ahead<em>of plan to date</em></div>';
+    else chip = '<div class="chip down"><i>&#9660;</i>' + F(-c.delta) + (U ? ' plans' : '') + ' behind<em>plan to date</em></div>';
+    var rem = c.ytd >= c.target ? '<div class="v">Done</div><div class="n good">Goal reached</div>' : '<div class="v">' + F(c.rem) + (U ? '<small>plans</small>' : '') + '</div><div class="n">left to reach ' + C(c.target) + "</div>";
+    var wk = c.daily * 5, wkPlan = c.planDaily * 5, dailyN = "";
+    if (c.ytd < c.target && c.started) dailyN = c.daily > c.planDaily * 1.005 ? '<div class="n warm">above the ' + (U ? wkPlan.toFixed(1) + " plan average" : usd(c.planDaily) + " plan average") + "</div>" : '<div class="n good">at or under the ' + (U ? wkPlan.toFixed(1) + " plan average" : usd(c.planDaily) + " plan average") + "</div>";
+    else dailyN = '<div class="n">plan average ' + (U ? wkPlan.toFixed(1) + " a week" : usd(c.planDaily) + " a day") + "</div>";
+    var dailyV = c.ytd >= c.target ? '<div class="v">Done</div>' : '<div class="v">' + (U ? wk.toFixed(1) + "<small>a week</small>" : usd(c.daily) + "<small>a day</small>") + "</div>";
     var dayNo = TOTAL - c.daysLeft;
     h += '<div class="slide" id="s-' + b.key + '" style="left:' + (idx * 1920) + "px;--a:" + b.a + ";--a2:" + b.a2 + ";--glow:" + b.a + '55">';
     h += '<div class="orb" style="width:760px;height:760px;left:-160px;top:-200px"></div><div class="orb" style="width:620px;height:620px;right:-120px;bottom:-240px;opacity:.15"></div>';
     h += '<div class="ghost">0' + (idx + 1) + "</div>";
-    h += '<div class="ringwrap">' + ringHTML(b, c) + '<div class="ringc"><div class="ico">' + icon(b.icon) + '</div><div class="pct"><span data-pct>0</span><small>%</small></div><div class="lab">of the <b>' + compact(c.target) + "</b> goal</div></div></div>";
+    h += '<div class="ringwrap">' + ringHTML(b, c) + '<div class="ringc"><div class="ico">' + icon(b.icon) + '</div><div class="pct"><span data-pct>0</span><small>%</small></div><div class="lab">of the <b>' + C(c.target) + (U ? " plan" : "") + "</b> goal</div></div></div>";
     h += '<div class="qcap">Quarter checkpoints</div><div class="qgrid" style="--a:' + b.a + ";--a2:" + b.a2 + '">' + quarterHTML(b, c) + "</div>";
-    h += '<div class="main"><div class="eyebrow"><div class="ei">' + icon(b.icon) + '</div>' + b.name.toUpperCase() + " <span>&middot; 2027 revenue</span></div>";
-    h += '<div class="hero"><span class="cur">$</span><span data-hero>0</span></div>';
-    h += '<div class="sub">year to date' + (c.asOf ? " &middot; through <b>" + DOW[c.asOf.getDay()] + ", " + MON[c.asOf.getMonth()] + " " + c.asOf.getDate() + "</b>" : "") + "</div>" + chip;
-    h += '<div class="pace"><div><span>Plan to date</span><b>' + usd(c.plan) + '</b></div><div><span>2027 goal</span><b>' + usd(c.target) + '</b></div></div>';
+    h += '<div class="main"><div class="eyebrow"><div class="ei">' + icon(b.icon) + '</div>' + b.name.toUpperCase() + " <span>&middot; 2027 " + (U ? "plans sold" : "revenue") + "</span></div>";
+    h += '<div class="hero">' + (U ? "" : '<span class="cur">$</span>') + '<span data-hero>0</span></div>';
+    h += '<div class="sub">' + (U ? "plans sold " : "") + 'year to date' + (c.asOf ? " &middot; through <b>" + DOW[c.asOf.getDay()] + ", " + MON[c.asOf.getMonth()] + " " + c.asOf.getDate() + "</b>" : "") + "</div>" + chip;
+    h += '<div class="pace"><div><span>Plan to date</span><b>' + F(Math.round(c.plan)) + '</b></div><div><span>2027 goal</span><b>' + F(c.target) + '</b></div></div>';
     h += '<div class="stats"><div class="stat glass"><div class="k">Still to go</div>' + rem + '</div>';
     h += '<div class="stat glass"><div class="k">Working days left</div><div class="v">' + c.daysLeft + '</div><div class="n">day ' + dayNo + " of " + TOTAL + " worked</div></div>";
-    h += '<div class="stat glass"><div class="k">Daily goal</div>' + dailyV + dailyN + "</div></div>";
+    h += '<div class="stat glass"><div class="k">' + (U ? "Weekly goal" : "Daily goal") + '</div>' + dailyV + dailyN + "</div></div>";
     h += '<div class="bottom"><div class="card glass"><h3>Year to date vs plan<span class="legend"><span><i></i>Actual</span><span><i class="p"></i>Plan</span></span></h3>' + chartHTML(b, c) + "</div>";
-    h += '<div class="card glass">' + (b.key === "company" ? "<h3>Department progress</h3>" + deptRows(c) : sharePanel(b, c)) + "</div></div></div></div>";
+    h += '<div class="card glass">' + (b.key === "company" ? "<h3>Department progress</h3>" + deptRows(c) : U ? pacePanel(b, c) : sharePanel(b, c)) + "</div></div></div></div>";
     return h;
   }
 
@@ -540,7 +552,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   // k: reveal progress 0..1 from fraction f0 of the final values; ck: chart reveal 0..1
   function paint(i, k, f0, ck) {
     var b = BOARDS[i], root = $("s-" + b.key); if (!root) return;
-    var c = calc(b.key), f = f0 + (1 - f0) * ease(k);
+    var c = calc(mk(b)), f = f0 + (1 - f0) * ease(k);
     var hero = root.querySelector("[data-hero]"); hero.textContent = fmt(c.ytd * f);
     root.querySelector("[data-pct]").textContent = Math.floor(c.pct * 100 * f);
     var over = c.pct > 1, scale = over ? 1 / c.pct : 1, start = 0;
@@ -560,7 +572,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
     var qps = root.querySelectorAll("[data-qp]");
     for (q = 0; q < qps.length; q++) qps[q].style.width = (Number(qps[q].getAttribute("data-qp")) * 100 * f).toFixed(1) + "%";
     var sh = root.querySelector("[data-share]");
-    if (sh) sh.textContent = (c.target / targetOf("company") * 100 * f).toFixed(1);
+    if (sh && !b.unit) sh.textContent = (c.target / targetOf("company") * 100 * f).toFixed(1);
   }
   var animRaf = {};
   function animate(i, f0, withChart, dur) {
@@ -617,12 +629,12 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   /* ---------------- celebration ---------------- */
   var celTimer = 0, celRaf = 0;
   function celebrate(key, th) {
-    var b = board(key), c = calc(key), amt = c.target * th;
+    var b = board(key), c = calc(key), amt = c.target * th, UU = !!b.unit;
     var words = { 25: "A quarter of the way", 50: "Halfway there", 75: "Three quarters done", 100: "Goal reached" };
     var cel = $("cel"); cel.style.setProperty("--c", b.a); cel.style.setProperty("--cg", b.a + "88");
     $("cel-k").textContent = words[Math.round(th * 100)];
-    $("cel-b").textContent = b.name + " · " + Math.round(th * 100) + "% of " + compact(c.target);
-    $("cel-a").textContent = usd(amt);
+    $("cel-b").textContent = b.name + " · " + Math.round(th * 100) + "% of " + (UU ? fmt(c.target) + " plans" : compact(c.target));
+    $("cel-a").textContent = UU ? fmt(amt) + " plans sold" : usd(amt);
     cel.hidden = false;
     var cv = $("cv"), ctx = cv.getContext("2d"); cv.width = 1920; cv.height = 1080;
     var big = th >= 1, parts = [], rockets = [], cols = [b.a, b.a2, "#ffffff", "#39b8ff", "#ffc84a"], i;
@@ -647,7 +659,7 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   function checkCrossings(prevD) {
     if (Q.get("demo") || !prevD) return;
     var th = [1, 0.75, 0.5, 0.25];
-    ["company"].concat(KEYS).some(function (k) {
+    ["company"].concat(KEYS.filter(function (x) { return x !== "plans"; }), ["plansSold"]).some(function (k) {
       var T = targetOf(k), pv = prevSum(prevD, k), cu = ytdOf(k);
       for (var i = 0; i < th.length; i++) {
         if (pv < T * th[i] && cu >= T * th[i]) {
@@ -677,13 +689,13 @@ body { font-family: var(--body); color: var(--text); -webkit-font-smoothing: ant
   try { baked = JSON.parse($("baked").textContent); } catch (e) { baked = null; }
   var demo = Q.get("demo");
   function apply(raw, first) {
-    var prevYtd = null; if (D) { prevYtd = { company: ytdOf("company") }; KEYS.forEach(function (k) { prevYtd[k] = D.ytd[k]; }); }
+    var prevYtd = null; if (D) { prevYtd = { company: ytdOf("company") }; MET.forEach(function (k) { prevYtd[k] = D.ytd[k]; }); }
     D = demo ? demoData(raw, Number(demo) || 0.4) : normalize(raw);
     buildCalendar();
     buildAll();
     $("flag").hidden = !demo;
     if (!first && prevYtd) {
-      var bk = board_cur().key, pv = bk === "company" ? prevYtd.company : prevYtd[bk], cvv = ytdOf(bk);
+      var bk = mk(board_cur()), pv = bk === "company" ? prevYtd.company : prevYtd[bk], cvv = ytdOf(bk);
       animate(cur, cvv ? clamp(pv / cvv, 0, 1) : 0, false, 2400);
       checkCrossings(prevEntry());
     }

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Update the 2027 goal boards.
-Usage: python3 update.py 2027-01-29 install=125000 service=40000 maintenance=22000 plans=6000 duct=9000
+Usage: python3 update.py 2027-01-29 install=125000 service=40000 maintenance=22000 plans=6000 plansSold=12 duct=9000
   - first argument is the date the totals are as of (end of that working day)
   - the numbers are year-to-date revenue for each department (install, service, maintenance, plans, duct)
+    plans = maintenance-plan REVENUE (counts in the company total); plansSold = number of plans sold (shown on the Maintenance plans board)
 Writes data.json and refreshes the baked copy inside index.html, appends to history (replacing any entry for the same date)."""
 import json, re, sys, time, os
 here = os.path.dirname(os.path.abspath(__file__))
@@ -14,6 +15,7 @@ keys = ["install", "service", "maintenance", "plans", "duct"]
 d = json.load(open(os.path.join(here, "data.json")))
 cur = {k: float(vals[k].replace(",", "").replace("$", "")) if k in vals else d["ytd"][k] for k in keys}
 cur = {k: int(round(v)) for k, v in cur.items()}
+cur["plansSold"] = int(float(vals.get("plansSold", d["ytd"].get("plansSold", 0))))
 d["ytd"] = cur
 d["asOf"] = as_of
 d["updatedAt"] = int(time.time() * 1000)
@@ -26,4 +28,4 @@ s = open(p).read()
 s2 = re.sub(r'(<script type="application/json" id="baked">)(.*?)(</script>)', lambda m: m.group(1) + j + m.group(3), s, count=1, flags=re.S)
 assert s2 != s or j in s
 open(p, "w").write(s2)
-print("company total:", sum(cur.values()), cur, "as of", as_of)
+print("company total:", sum(cur[k] for k in keys), cur, "as of", as_of)
