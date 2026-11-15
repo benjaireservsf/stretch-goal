@@ -103,8 +103,8 @@ body {
 .tick text { font: 600 34px var(--display); fill: var(--muted); }
 .co .lead { fill: none; stroke: var(--muted); stroke-width: 3; }
 .co .cross { stroke: #fff; stroke-width: 3; stroke-dasharray: 8 6; }
-.co .lbl { font: 600 20px var(--display); letter-spacing: 0.06em; fill: var(--muted); }
-.co .amt { font: 700 44px var(--display); fill: #fff; }
+.co .lbl { font: 600 22px var(--display); letter-spacing: 0.06em; fill: var(--muted); }
+.co .amt { font: 700 48px var(--display); fill: #fff; }
 .co .sub { font: 500 28px var(--body); fill: var(--muted); }
 .co .flag { opacity: 0; }
 .co .flag rect { fill: #fff; }
@@ -168,19 +168,19 @@ body {
 
 <main class="stage">
   <section class="thermo" aria-label="Thermometer showing 2026 revenue against the $4.8 million goal, the $5 million stretch goal and the $5.2 million goal">
-    <svg viewBox="0 0 960 1060" preserveAspectRatio="xMidYMid meet" role="img" aria-label="2026 stretch goal thermometer">
+    <svg viewBox="0 0 960 1166" preserveAspectRatio="xMidYMid meet" role="img" aria-label="2026 stretch goal thermometer">
       <defs>
-        <clipPath id="glass"><path id="glass-path" d="M230 860 L230 100 A60 60 0 0 1 350 100 L350 860 A100 100 0 1 1 230 860 Z"/></clipPath>
+        <clipPath id="glass"><path id="glass-path" d="M230 966 L230 100 A60 60 0 0 1 350 100 L350 966 A100 100 0 1 1 230 966 Z"/></clipPath>
       </defs>
-      <path class="tube-bg" d="M230 860 L230 100 A60 60 0 0 1 350 100 L350 860 A100 100 0 1 1 230 860 Z"/>
+      <path class="tube-bg" d="M230 966 L230 100 A60 60 0 0 1 350 100 L350 966 A100 100 0 1 1 230 966 Z"/>
       <g clip-path="url(#glass)">
-        <rect id="fill" class="mercury" x="170" y="40" width="240" height="1020" transform="translate(0 820)"/>
-        <rect class="gloss" x="244" y="40" width="12" height="880"/>
+        <rect id="fill" class="mercury" x="170" y="40" width="240" height="1130" transform="translate(0 926)"/>
+        <rect class="gloss" x="244" y="40" width="12" height="986"/>
       </g>
-      <path class="tube-line" d="M230 860 L230 100 A60 60 0 0 1 350 100 L350 860 A100 100 0 1 1 230 860 Z"/>
+      <path class="tube-line" d="M230 966 L230 100 A60 60 0 0 1 350 100 L350 966 A100 100 0 1 1 230 966 Z"/>
       <g id="ticks"></g>
       <g id="callouts"></g>
-      <g id="tag" class="tag" transform="translate(0 860)" style="display:none">
+      <g id="tag" class="tag" transform="translate(0 966)" style="display:none">
         <rect x="0" y="-34" width="216" height="68" rx="10"/>
         <polygon points="216,-15 236,0 216,15"/>
         <text id="tag-text" x="108" y="14" text-anchor="middle">$0</text>
@@ -258,7 +258,7 @@ body {
 <script>
 (function () {
   var TARGET = 4800000, MILESTONE = 5000000, GOAL = 5200000, DEFAULT_MIN = 3000000;
-  var Y_TOP = 100, Y_BOTTOM = 860, CAP_Y = 44, SVGNS = "http://www.w3.org/2000/svg";
+  var Y_TOP = 100, Y_BOTTOM = 966, CAP_Y = 44, SVGNS = "http://www.w3.org/2000/svg";
   var state = { revenue: null, prevRevenue: null, daysOverride: null, scaleMin: DEFAULT_MIN, updatedAt: null };
   var shown = null, raf = 0, builtMin = null, db = null;
   var $ = function (id) { return document.getElementById(id); };
@@ -292,8 +292,8 @@ body {
       var g = el("g", { "class": "co" });
       g.appendChild(el("line", { "class": "cross", x1: 220, x2: 362, y1: mY, y2: mY }));
       g.appendChild(el("polyline", { "class": "lead", points: "350," + mY + " 396," + mY }));
-      g.appendChild(el("text", { "class": "lbl", x: 412, y: mY - 9 }, label));
-      g.appendChild(el("text", { "class": "amt", x: 412, y: mY + 32 }, amt));
+      g.appendChild(el("text", { "class": "lbl", x: 412, y: mY - 10 }, label));
+      g.appendChild(el("text", { "class": "amt", x: 412, y: mY + 36 }, amt));
       var f = el("g", { "class": "flag" });
       f.appendChild(el("rect", { x: 770, y: mY - 14, width: 170, height: 48, rx: 6 }));
       f.appendChild(el("text", { x: 855, y: mY + 21, "text-anchor": "middle" }, "REACHED"));
