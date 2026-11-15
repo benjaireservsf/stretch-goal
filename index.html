@@ -63,7 +63,7 @@ body {
 .asof { margin: 0; font-size: clamp(16px, min(1.7vw, 3vh), 34px); color: var(--muted); }
 .pct { margin: 0; font: 600 clamp(18px, min(2vw, 3.6vh), 44px)/1.15 var(--display); letter-spacing: 0.03em; }
 .pct b { color: var(--mercury); font-weight: 700; }
-.steps { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(12px, 1.6vw, 32px); }
+.steps { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(12px, 1.6vw, 32px); }
 .step {
   min-width: 0;
   background: var(--panel);
@@ -74,7 +74,8 @@ body {
 .step.hit { background: var(--text); color: var(--bg); }
 .step.hit .step-sub, .step.hit .step-name { color: var(--bg); }
 .step-name { margin: 0; font: 600 clamp(14px, min(1.45vw, 2.6vh), 28px)/1.2 var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
-.step-val { font: 700 clamp(30px, min(3.4vw, 6vh), 90px)/1 var(--display); font-variant-numeric: tabular-nums; }
+.step-val { font: 700 clamp(26px, min(2.5vw, 4.6vh), 70px)/1 var(--display); font-variant-numeric: tabular-nums; }
+.steps .step-name { font-size: clamp(12px, min(1.15vw, 2.1vh), 22px); letter-spacing: 0.08em; }
 .step-val small { display: block; margin-top: 0.15em; font-size: 0.38em; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); }
 .step-sub { margin: 0; font-size: clamp(14px, min(1.45vw, 2.6vh), 28px); line-height: 1.3; color: var(--muted); }
 .daily { background: var(--blue); border-radius: 14px; padding: clamp(14px, 2vh, 28px) clamp(14px, 1.6vw, 32px); display: flex; flex-direction: column; gap: clamp(10px, 1.6vh, 22px); }
@@ -102,8 +103,8 @@ body {
 .tick text { font: 600 34px var(--display); fill: var(--muted); }
 .co .lead { fill: none; stroke: var(--muted); stroke-width: 3; }
 .co .cross { stroke: #fff; stroke-width: 3; stroke-dasharray: 8 6; }
-.co .lbl { font: 600 26px var(--display); letter-spacing: 0.06em; fill: var(--muted); }
-.co .amt { font: 700 58px var(--display); fill: #fff; }
+.co .lbl { font: 600 20px var(--display); letter-spacing: 0.06em; fill: var(--muted); }
+.co .amt { font: 700 44px var(--display); fill: #fff; }
 .co .sub { font: 500 28px var(--body); fill: var(--muted); }
 .co .flag { opacity: 0; }
 .co .flag rect { fill: #fff; }
@@ -166,7 +167,7 @@ body {
 <canvas class="fireworks" id="fireworks"></canvas>
 
 <main class="stage">
-  <section class="thermo" aria-label="Thermometer showing 2026 revenue against the $5 million milestone and the $5.2 million goal">
+  <section class="thermo" aria-label="Thermometer showing 2026 revenue against the $4.8 million goal, the $5 million stretch goal and the $5.2 million goal">
     <svg viewBox="0 0 960 1060" preserveAspectRatio="xMidYMid meet" role="img" aria-label="2026 stretch goal thermometer">
       <defs>
         <clipPath id="glass"><path id="glass-path" d="M230 860 L230 100 A60 60 0 0 1 350 100 L350 860 A100 100 0 1 1 230 860 Z"/></clipPath>
@@ -193,8 +194,12 @@ body {
     <p class="asof" id="asof">Waiting for the first update</p>
     <p class="pct" id="pct" hidden></p>
     <div class="steps">
+      <div class="step" id="step0">
+        <p class="step-name">2026 goal &middot; $4,800,000</p>
+        <div class="step-val" id="s0-val">&mdash;</div>
+      </div>
       <div class="step" id="step1">
-        <p class="step-name">First milestone &middot; $5,000,000</p>
+        <p class="step-name">2026 stretch goal &middot; $5,000,000</p>
         <div class="step-val" id="s1-val">&mdash;</div>
       </div>
       <div class="step" id="step2">
@@ -241,6 +246,7 @@ body {
     <button class="cancel" id="cancel" type="button">Close</button>
   </div>
   <div class="row">
+    <button class="preview" id="prev0" type="button">Preview $4.8M screen</button>
     <button class="preview" id="prev1" type="button">Preview $5M screen</button>
     <button class="preview" id="prev2" type="button">Preview $5.2M screen</button>
   </div>
@@ -251,7 +257,7 @@ body {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600;700&display=swap">
 <script>
 (function () {
-  var MILESTONE = 5000000, GOAL = 5200000, DEFAULT_MIN = 3000000;
+  var TARGET = 4800000, MILESTONE = 5000000, GOAL = 5200000, DEFAULT_MIN = 3000000;
   var Y_TOP = 100, Y_BOTTOM = 860, CAP_Y = 44, SVGNS = "http://www.w3.org/2000/svg";
   var state = { revenue: null, prevRevenue: null, daysOverride: null, scaleMin: DEFAULT_MIN, updatedAt: null };
   var shown = null, raf = 0, builtMin = null, db = null;
@@ -281,31 +287,25 @@ body {
       g.appendChild(el("text", { x: 386, y: y + 12 }, "$" + (t / 1e6).toFixed(1) + "M"));
       ticks.appendChild(g);
     }
-    // goal callout
-    var gY = Y_TOP;
-    var g1 = el("g", { "class": "co" });
-    g1.appendChild(el("line", { "class": "cross", x1: 220, x2: 362, y1: gY, y2: gY }));
-    g1.appendChild(el("polyline", { "class": "lead", points: "350," + gY + " 396," + gY }));
-    g1.appendChild(el("text", { "class": "lbl", x: 412, y: gY - 40 }, "BIG, HAIRY, AUDACIOUS GOAL"));
-    g1.appendChild(el("text", { "class": "amt", x: 412, y: gY + 14 }, "$5,200,000"));
-    var f1 = el("g", { "class": "flag" });
-    f1.appendChild(el("rect", { x: 770, y: gY - 30, width: 170, height: 48, rx: 6 }));
-    f1.appendChild(el("text", { x: 855, y: gY + 4, "text-anchor": "middle" }, "REACHED"));
-    g1.appendChild(f1);
-    co.appendChild(g1);
-    // milestone callout
-    var mY = yFor(MILESTONE), tY = Math.max(mY, gY + 60);
-    var g2 = el("g", { "class": "co" });
-    g2.appendChild(el("line", { "class": "cross", x1: 220, x2: 362, y1: mY, y2: mY }));
-    g2.appendChild(el("polyline", { "class": "lead", points: "350," + mY + " 380," + mY + " 380," + tY + " 396," + tY }));
-    g2.appendChild(el("text", { "class": "lbl", x: 412, y: tY + 8 }, "FIRST MILESTONE"));
-    g2.appendChild(el("text", { "class": "amt", x: 412, y: tY + 66 }, "$5,000,000"));
-    var f2 = el("g", { "class": "flag" });
-    f2.appendChild(el("rect", { x: 770, y: tY + 32, width: 170, height: 48, rx: 6 }));
-    f2.appendChild(el("text", { x: 855, y: tY + 66, "text-anchor": "middle" }, "REACHED"));
-    g2.appendChild(f2);
-    co.appendChild(g2);
-    callouts = { goal: g1, first: g2 };
+    // callouts: one per target, each centered on its mark on the tube
+    function callout(label, amt, mY) {
+      var g = el("g", { "class": "co" });
+      g.appendChild(el("line", { "class": "cross", x1: 220, x2: 362, y1: mY, y2: mY }));
+      g.appendChild(el("polyline", { "class": "lead", points: "350," + mY + " 396," + mY }));
+      g.appendChild(el("text", { "class": "lbl", x: 412, y: mY - 9 }, label));
+      g.appendChild(el("text", { "class": "amt", x: 412, y: mY + 32 }, amt));
+      var f = el("g", { "class": "flag" });
+      f.appendChild(el("rect", { x: 770, y: mY - 14, width: 170, height: 48, rx: 6 }));
+      f.appendChild(el("text", { x: 855, y: mY + 21, "text-anchor": "middle" }, "REACHED"));
+      g.appendChild(f);
+      co.appendChild(g);
+      return g;
+    }
+    callouts = {
+      goal: callout("BIG, HAIRY, AUDACIOUS GOAL", "$5,200,000", yFor(GOAL)),
+      first: callout("2026 STRETCH GOAL", "$5,000,000", yFor(MILESTONE)),
+      target: callout("2026 GOAL", "$4,800,000", yFor(TARGET))
+    };
   }
 
   var DEPTS = [["Install", 0.69], ["Service", 0], ["Maintenance", 0.11], ["Duct cleaning", 0.04]];
@@ -359,8 +359,9 @@ body {
       $("tag").style.display = "none";
       $("total").textContent = "—";
       $("pct").hidden = true;
-      $("s1-val").textContent = "—"; $("s2-val").textContent = "—";
-      $("step1").classList.remove("hit"); $("step2").classList.remove("hit");
+      $("s0-val").textContent = "—"; $("s1-val").textContent = "—"; $("s2-val").textContent = "—";
+      $("step0").classList.remove("hit"); $("step1").classList.remove("hit"); $("step2").classList.remove("hit");
+      callouts.target && callouts.target.classList.remove("hit");
       callouts.first && callouts.first.classList.remove("hit");
       callouts.goal && callouts.goal.classList.remove("hit");
       renderDaily(null, days);
@@ -379,11 +380,14 @@ body {
     var pc = $("pct");
     pc.hidden = false;
     pc.innerHTML = v >= GOAL ? "<b>" + Math.floor(v / GOAL * 100) + "%</b> of our $5,200,000 goal" : "<b>" + Math.floor(v / GOAL * 100) + "%</b> of the way to $5,200,000";
-    var hit1 = v >= MILESTONE, hit2 = v >= GOAL;
+    var hit0 = v >= TARGET, hit1 = v >= MILESTONE, hit2 = v >= GOAL;
+    callouts.target.classList.toggle("hit", hit0);
     callouts.first.classList.toggle("hit", hit1);
     callouts.goal.classList.toggle("hit", hit2);
+    $("step0").classList.toggle("hit", hit0);
     $("step1").classList.toggle("hit", hit1);
     $("step2").classList.toggle("hit", hit2);
+    fillStep("s0", TARGET, v, "", days);
     fillStep("s1", MILESTONE, v, "$1,000 each", days);
     renderDaily(v, days);
     fillStep("s2", GOAL, v, "$2,000 total each", days);
@@ -433,6 +437,7 @@ body {
     if (!isFinite(pv) || !isFinite(r)) return null;
     if (pv < GOAL && r >= GOAL) return "goal";
     if (pv < MILESTONE && r >= MILESTONE) return "first";
+    if (pv < TARGET && r >= TARGET) return "target";
     return null;
   }
   function applyData(d, silent) {
@@ -528,8 +533,8 @@ body {
     $("celebrate").hidden = true;
   }
   function celebrate(kind) {
-    $("cel-kicker").textContent = kind === "goal" ? "Big, hairy, audacious goal reached" : "First milestone reached";
-    $("cel-amt").textContent = kind === "goal" ? "$5,200,000" : "$5,000,000";
+    $("cel-kicker").textContent = kind === "goal" ? "Big, hairy, audacious goal reached" : kind === "first" ? "2026 stretch goal reached" : "2026 goal reached";
+    $("cel-amt").textContent = kind === "goal" ? "$5,200,000" : kind === "first" ? "$5,000,000" : "$4,800,000";
     $("celebrate").hidden = false;
     var c = $("confetti"), ctx = c.getContext("2d");
     c.width = window.innerWidth; c.height = window.innerHeight;
@@ -554,6 +559,7 @@ body {
     })();
   }
   $("celebrate").addEventListener("click", stopCelebration);
+  $("prev0").addEventListener("click", function () { $("panel").hidden = true; celebrate("target"); });
   $("prev1").addEventListener("click", function () { $("panel").hidden = true; celebrate("first"); });
   $("prev2").addEventListener("click", function () { $("panel").hidden = true; celebrate("goal"); });
 
